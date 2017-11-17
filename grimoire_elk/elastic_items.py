@@ -111,6 +111,9 @@ class ElasticItems():
         """ Get the items from the index related to the backend applying and
         optional _filter if provided"""
 
+        headers = {"Content-Type" : "application/json"}
+
+
         if not self.elastic:
             return None
         url = self.elastic.index_url
@@ -129,7 +132,8 @@ class ElasticItems():
                 "scroll" : max_process_items_pack_time,
                 "scroll_id" : elastic_scroll_id
                 }
-            r = self.requests.post(url, data=json.dumps(scroll_data))
+            res = self.requests.post(url, data=json.dumps(scroll_data), headers=headers)
+            res.raise_for_status()
         else:
             # If using a perceval backends always filter by repository
             # to support multi repository indexes
@@ -199,14 +203,15 @@ class ElasticItems():
             """ % (filters, order_query)
 
             logger.debug("%s\n%s", url, json.dumps(json.loads(query), indent=4))
-            r = self.requests.post(url, data=query)
+            res = self.requests.post(url, data=query, headers=headers)
+            res.raise_for_status()
 
         items = []
         rjson = None
         try:
-            rjson = r.json()
+            rjson = res.json()
         except:
-            logger.error("No JSON found in %s" % (r.text))
+            logger.error("No JSON found in %s" % (res.text))
             logger.error("No results found from %s" % (url))
 
         return rjson
