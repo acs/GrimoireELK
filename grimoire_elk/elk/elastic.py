@@ -69,21 +69,19 @@ class ElasticSearch(object):
 
         self.requests = grimoire_con(insecure)
 
-        r = self.requests.get(self.index_url)
+        res = self.requests.get(self.index_url)
 
-        if r.status_code != 200:
+        if res.status_code != 200:
             # Index does no exists
-            r = self.requests.put(self.index_url, data=analyzers)
-            if r.status_code != 200:
-                logger.error("Can't create index %s (%s)",
-                              self.index_url, r.status_code)
-                raise ElasticWriteException()
-            else:
-                logger.info("Created index " + self.index_url)
+            res = self.requests.put(self.index_url, data=analyzers)
+            res.raise_for_status()
+            logger.info("Created index " + self.index_url)
         else:
             if clean:
-                self.requests.delete(self.index_url)
-                self.requests.put(self.index_url, data=analyzers)
+                res = self.requests.delete(self.index_url)
+                res.raise_for_status()
+                res = self.requests.put(self.index_url, data=analyzers)
+                res.raise_for_status()
                 logger.info("Deleted and created index " + self.index_url)
         if mappings:
             self.create_mappings(mappings)
@@ -111,6 +109,7 @@ class ElasticSearch(object):
         bulk_json = ""
 
         url = self.index_url+'/items/_bulk'
+        # url = 'http://localhost:9200/_bulk'
 
         logger.debug("Adding items to %s (in %i packs)" % (url, self.max_items_bulk))
 
@@ -144,10 +143,11 @@ class ElasticSearch(object):
         # After a bulk upload the searches are not refreshed real time
         # This method waits until the upload is visible in searches
 
-        r = self.requests.get(self.index_url+'/_search?size=1')
-        if 'hits' not in r.json():
-            logging.error('Can get the number of already existing items in ES: %s', r.json())
-        total = r.json()['hits']['total']  # Already existing items
+        res = self.requests.get(self.index_url+'/_search?size=1')
+        res.raise_for_status()
+        if 'hits' not in res.json():
+            logging.error('Can get the number of already existing items in ES: %s', res.json())
+        total = res.json()['hits']['total']  # Already existing items
         new_items = self.bulk_upload(items, field_id)
         if not sync:
             return
@@ -161,8 +161,9 @@ class ElasticSearch(object):
         search_start = datetime.now()
         while total_search != total:
             sleep(0.1)
-            r = self.requests.get(self.index_url+'/_search?size=1')
-            total_search = r.json()['hits']['total']
+            res = self.requests.get(self.index_url+'/_search?size=1')
+            res.raise_for_status()
+            total_search = res.json()['hits']['total']
             if (datetime.now()-search_start).total_seconds() > self.wait_bulk_seconds:
                 logger.debug("Bulk data does not appear as NEW after %is" % (self.wait_bulk_seconds))
                 logger.debug("Probably %i item updates" % (total-total_search))
@@ -176,9 +177,10 @@ class ElasticSearch(object):
 
             # First create the manual mappings
             if mappings[_type] != '{}':
-                r = self.requests.put(url_map, data=mappings[_type])
-                if r.status_code != 200:
-                    logger.error("Error creating ES mappings %s", r.text)
+                res = self.requests.put(url_map, data=mappings[_type])
+                res.raise_for_status()
+                if res.status_code != 200:
+                    logger.error("Error creating ES mappings %s", res.text)
 
             # By default all strings are not analyzed
             not_analyze_strings = """
@@ -195,7 +197,8 @@ class ElasticSearch(object):
                 }
               ]
             } """
-            r = self.requests.put(url_map, data=not_analyze_strings)
+            res = self.requests.put(url_map, data=not_analyze_strings)
+            res.raise_for_status()
 
     def get_last_date(self, field, _filters = []):
         '''
@@ -256,6 +259,7 @@ class ElasticSearch(object):
 
         logger.debug("%s %s", url, data_json)
         res = self.requests.post(url, data=data_json)
+        res.raise_for_status()
         res_json = res.json()
 
         if 'aggregations' in res_json:
