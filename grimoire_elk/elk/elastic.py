@@ -91,13 +91,17 @@ class ElasticSearch(object):
     def _safe_put_bulk(self, url, bulk_json):
         """ Bulk PUT controlling unicode issues """
 
+        headers = {"Content-Type": "application/x-ndjson"}
+
         try:
-            self.requests.put(url, data=bulk_json)
+            res = self.requests.put(url, data=bulk_json, headers=headers)
+            res.raise_for_status()
         except UnicodeEncodeError:
             # Related to body.encode('iso-8859-1'). mbox data
             logger.error("Encondig error ... converting bulk to iso-8859-1")
             bulk_json = bulk_json.encode('iso-8859-1','ignore')
-            self.requests.put(url, data=bulk_json)
+            res = self.requests.put(url, data=bulk_json, headers=headers)
+            res.raise_for_status()
 
     def bulk_upload(self, items, field_id):
         ''' Upload in controlled packs items to ES using bulk API '''
