@@ -73,7 +73,8 @@ class ElasticSearch(object):
 
         if res.status_code != 200:
             # Index does no exists
-            res = self.requests.put(self.index_url, data=analyzers)
+            headers = {"Content-Type": "application/json"}
+            res = self.requests.put(self.index_url, data=analyzers, headers=headers)
             res.raise_for_status()
             logger.info("Created index " + self.index_url)
         else:
@@ -171,33 +172,52 @@ class ElasticSearch(object):
 
     def create_mappings(self, mappings):
 
+        headers = {"Content-Type" : "application/json"}
+
         for _type in mappings:
 
             url_map = self.index_url + "/"+_type+"/_mapping"
 
             # First create the manual mappings
             if mappings[_type] != '{}':
-                res = self.requests.put(url_map, data=mappings[_type])
+                res = self.requests.put(url_map, data=mappings[_type], headers=headers)
                 res.raise_for_status()
                 if res.status_code != 200:
                     logger.error("Error creating ES mappings %s", res.text)
 
             # By default all strings are not analyzed
-            not_analyze_strings = """
-            {
-              "dynamic_templates": [
-                { "notanalyzed": {
-                      "match": "*",
-                      "match_mapping_type": "string",
-                      "mapping": {
-                          "type":        "string",
-                          "index":       "not_analyzed"
-                      }
-                   }
-                }
-              ]
-            } """
-            res = self.requests.put(url_map, data=not_analyze_strings)
+            ES6 = True
+            if not ES6:
+                not_analyze_strings = """
+                {
+                  "dynamic_templates": [
+                    { "notanalyzed": {
+                          "match": "*",
+                          "match_mapping_type": "string",
+                          "mapping": {
+                              "type":        "string",
+                              "index":       "not_analyzed"
+                          }
+                       }
+                    }
+                  ]
+                } """
+            else:
+                not_analyze_strings = """
+                {
+                  "dynamic_templates": [
+                    { "notanalyzed": {
+                          "match": "*",
+                          "match_mapping_type": "string",
+                          "mapping": {
+                              "type":        "keyword"
+                          }
+                       }
+                    }
+                  ]
+                } """
+
+            res = self.requests.put(url_map, data=not_analyze_strings, headers=headers)
             res.raise_for_status()
 
     def get_last_date(self, field, _filters = []):
@@ -258,7 +278,10 @@ class ElasticSearch(object):
         } ''' % (data_query, data_agg)
 
         logger.debug("%s %s", url, data_json)
-        res = self.requests.post(url, data=data_json)
+
+        headers = {"Content-Type" : "application/json"}
+
+        res = self.requests.post(url, data=data_json, headers=headers)
         res.raise_for_status()
         res_json = res.json()
 
