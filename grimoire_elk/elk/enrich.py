@@ -44,6 +44,9 @@ from .. import __version__
 
 logger = logging.getLogger(__name__)
 
+HEADERS_JSON = {"Content-Type": "application/json"}
+
+
 try:
     import pymysql
     MYSQL_LIBS = True
@@ -395,7 +398,7 @@ class Enrich(ElasticItems):
             # No items enriched, nothing to upload to ES
             return total
 
-        r = self.requests.put(url, data=bulk_json)
+        r = self.requests.put(url, data=bulk_json, headers=HEADERS_JSON)
         r.raise_for_status()
 
         return total
