@@ -712,9 +712,17 @@ class Enrich(ElasticItems):
 
         return eitem_sh
 
+    def clean_sh_caches(self):
+        self.get_enrollments.cache_clear()
+        self.get_unique_identity.cache_clear()
+        self.get_uuid_from_id.cache_clear()
+        self.__get_sh_ids_cache.cache_clear()
+
+
     @lru_cache()
     def get_enrollments(self, uuid):
-        return api.enrollments(self.sh_db, uuid)
+        enrollments = api.enrollments(self.sh_db, uuid)
+        return enrollments
 
     @lru_cache()
     def get_unique_identity(self, uuid):

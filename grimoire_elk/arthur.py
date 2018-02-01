@@ -335,6 +335,7 @@ def refresh_identities(enrich_backend, filter_author=None):
             yield eitem
 
     logger.debug("Refreshing identities fields from %s", enrich_backend.elastic.index_url)
+    enrich_backend.clean_sh_caches()
 
     total = 0
 
