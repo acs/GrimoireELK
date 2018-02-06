@@ -47,6 +47,7 @@ from .ocean.github import GitHubOcean
 from .ocean.jenkins import JenkinsOcean
 from .ocean.jira import JiraOcean
 from .ocean.kitsune import KitsuneOcean
+from .ocean.marvel import MarvelOcean
 from .ocean.mbox import MBoxOcean
 from .ocean.mediawiki import MediaWikiOcean
 from .ocean.meetup import MeetupOcean
@@ -80,6 +81,7 @@ from .elk.hyperkitty import HyperKittyEnrich
 from .elk.jenkins import JenkinsEnrich
 from .elk.jira import JiraEnrich
 from .elk.kitsune import KitsuneEnrich
+from .elk.marvel import MarvelEnrich
 from .elk.mbox import MBoxEnrich
 from .elk.mediawiki import MediaWikiEnrich
 from .elk.meetup import MeetupEnrich
@@ -202,6 +204,7 @@ def get_connectors():
             "jenkins": [Jenkins, JenkinsOcean, JenkinsEnrich, JenkinsCommand],
             "jira": [Jira, JiraOcean, JiraEnrich, JiraCommand],
             "kitsune": [Kitsune, KitsuneOcean, KitsuneEnrich, KitsuneCommand],
+            "marvel": [None, MarvelOcean, MarvelEnrich, None],
             "mbox": [MBox, MBoxOcean, MBoxEnrich, MBoxCommand],
             "mediawiki": [MediaWiki, MediaWikiOcean, MediaWikiEnrich, MediaWikiCommand],
             "meetup": [Meetup, MeetupOcean, MeetupEnrich, MeetupCommand],
